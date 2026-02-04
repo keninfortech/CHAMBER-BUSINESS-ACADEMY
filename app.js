@@ -22,24 +22,24 @@ function normalizeHeader(h) {
 }
 
 function sanitizeCounty(county) {
-  const v = (county || "").toString().trim();
+  var v = (county || "").toString().trim();
   if (!v) return "Unknown_County";
   return v.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_").trim() || "Unknown_County";
 }
 
 function sanitizeNameForFile(name) {
-  const v = (name || "").toString().trim().toUpperCase();
-  const safe = v.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_").slice(0, 50);
+  var v = (name || "").toString().trim().toUpperCase();
+  var safe = v.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_").slice(0, 50);
   return safe || "NAME_NOT_PROVIDED";
 }
 
 function formatName(name) {
-  const v = (name || "").toString().trim();
+  var v = (name || "").toString().trim();
   return v ? v.toUpperCase() : "NAME NOT PROVIDED";
 }
 
 function padSerial(num, digits) {
-  const s = String(num);
+  var s = String(num);
   return s.length >= digits ? s : "0".repeat(digits - s.length) + s;
 }
 
@@ -49,9 +49,9 @@ function clampInt(n, min, max) {
 }
 
 function rgbFromInputs() {
-  const r = clampInt(parseInt(el("colorR").value, 10), 0, 255);
-  const g = clampInt(parseInt(el("colorG").value, 10), 0, 255);
-  const b = clampInt(parseInt(el("colorB").value, 10), 0, 255);
+  var r = clampInt(parseInt(el("colorR").value, 10), 0, 255);
+  var g = clampInt(parseInt(el("colorG").value, 10), 0, 255);
+  var b = clampInt(parseInt(el("colorB").value, 10), 0, 255);
   return { r: r / 255, g: g / 255, b: b / 255 };
 }
 
@@ -69,18 +69,24 @@ function getSettings() {
     nameSize: parseFloat(el("nameSize").value) || 20,
     serialSize: parseFloat(el("serialSize").value) || 14,
 
-    courseX: parseFloat(el("courseX").value) || 124,
-    courseY: parseFloat(el("courseY").value) || 310,
-    courseW: parseFloat(el("courseW").value) || 600,
-    courseH: parseFloat(el("courseH").value) || 20,
+    // Course wipe: covers "successfully participated..." + "DIGITAL TRADE..." (2 lines)
+    courseWipeX: parseFloat(el("courseX").value) || 100,
+    courseWipeY: parseFloat(el("courseWipeY").value) || 290,
+    courseWipeW: parseFloat(el("courseW").value) || 700,
+    courseWipeH: parseFloat(el("courseWipeH").value) || 45,
+    // Course text: centered on the original course line
+    courseTextY: parseFloat(el("courseY").value) || 310,
     courseSize: parseFloat(el("courseSize").value) || 16,
     courseAlign: el("courseAlign").value || "center",
 
-    dateX: parseFloat(el("dateX").value) || 284,
-    dateY: parseFloat(el("dateY").value) || 264,
-    dateW: parseFloat(el("dateW").value) || 450,
-    dateH: parseFloat(el("dateH").value) || 20,
-    dateSize: parseFloat(el("dateSize").value) || 14,
+    // Date wipe: covers "Held on 9th December , 2025"
+    dateWipeX: parseFloat(el("dateX").value) || 250,
+    dateWipeY: parseFloat(el("dateWipeY").value) || 246,
+    dateWipeW: parseFloat(el("dateW").value) || 350,
+    dateWipeH: parseFloat(el("dateWipeH").value) || 22,
+    // Date text
+    dateTextY: parseFloat(el("dateY").value) || 264,
+    dateSize: parseFloat(el("dateSize").value) || 16,
     dateAlign: el("dateAlign").value || "center",
 
     textColor: rgbFromInputs(),
@@ -89,7 +95,7 @@ function getSettings() {
 
 async function loadDefaultTemplate() {
   try {
-    const res = await fetch("assets/template.pdf");
+    var res = await fetch("assets/template.pdf");
     if (!res.ok) throw new Error("HTTP " + res.status);
     state.templateBytes = await res.arrayBuffer();
     setTemplateStatus("Template loaded: assets/template.pdf");
@@ -106,11 +112,11 @@ async function handleTemplateUpload(file) {
 
 async function handleFontUpload(which, file) {
   if (!file) return;
-  const bytes = await file.arrayBuffer();
+  var bytes = await file.arrayBuffer();
   if (which === "regular") state.fontRegularBytes = bytes;
   if (which === "bold") state.fontBoldBytes = bytes;
-  const reg = state.fontRegularBytes ? "custom regular" : "default regular";
-  const bold = state.fontBoldBytes ? "custom bold" : "default bold";
+  var reg = state.fontRegularBytes ? "custom regular" : "default regular";
+  var bold = state.fontBoldBytes ? "custom bold" : "default bold";
   setFontStatus("Fonts: " + reg + " + " + bold);
 }
 
@@ -332,6 +338,7 @@ function exportCsvProcessed() {
   setStatus("Exported processed CSV.");
 }
 
+/* ── date formatter: "Held on 30th January, 2026" ── */
 function formatDateForCert(dateStr) {
   if (!dateStr) return "";
   var str = dateStr.toString().trim();
@@ -361,23 +368,22 @@ function formatDateForCert(dateStr) {
   return "Held on " + day + suffix + " " + months[d.getMonth()] + ", " + d.getFullYear();
 }
 
-function wipeAndDraw(page, text, cfg) {
+/* ── wipe rect + draw text ── */
+function wipeRect(page, x, y, w, h) {
   var rgb = PDFLib.rgb;
   page.drawRectangle({
-    x: cfg.wipeX, y: cfg.wipeY, width: cfg.wipeW, height: cfg.wipeH,
+    x: x, y: y, width: w, height: h,
     color: rgb(1, 1, 1), borderColor: rgb(1, 1, 1), borderWidth: 0,
   });
-  if (!text) return;
-  if (cfg.align === "center") {
-    var tw = cfg.font.widthOfTextAtSize(text, cfg.size);
-    var centerX = cfg.wipeX + (cfg.wipeW / 2);
-    var x = centerX - (tw / 2);
-    page.drawText(text, { x: x, y: cfg.textY, size: cfg.size, font: cfg.font, color: cfg.color });
-  } else {
-    page.drawText(text, { x: cfg.textX, y: cfg.textY, size: cfg.size, font: cfg.font, color: cfg.color });
-  }
 }
 
+function drawCentered(page, text, areaX, areaW, y, font, size, color) {
+  var tw = font.widthOfTextAtSize(text, size);
+  var x = areaX + (areaW / 2) - (tw / 2);
+  page.drawText(text, { x: x, y: y, size: size, font: font, color: color });
+}
+
+/* ── build one certificate ── */
 async function buildCertificatePdfBytes(templateBytes, participant, serialText, settings) {
   var PDFDocument = PDFLib.PDFDocument;
   var StandardFonts = PDFLib.StandardFonts;
@@ -386,64 +392,54 @@ async function buildCertificatePdfBytes(templateBytes, participant, serialText, 
   var pdfDoc = await PDFDocument.load(templateBytes);
   var page = pdfDoc.getPage(0);
 
+  // Fonts: use custom if uploaded, else Helvetica fallback
   var fontRegular, fontBold;
   if (state.fontRegularBytes) fontRegular = await pdfDoc.embedFont(state.fontRegularBytes);
-  else fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  else fontRegular = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   if (state.fontBoldBytes) fontBold = await pdfDoc.embedFont(state.fontBoldBytes);
-  else fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  else fontBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
 
   var color = rgb(settings.textColor.r, settings.textColor.g, settings.textColor.b);
 
-  // Serial number (full CBA0801)
+  // ── Serial number ──
   page.drawText(serialText, {
     x: settings.serialX, y: settings.serialY,
     size: settings.serialSize, font: fontRegular, color: color,
   });
 
-  // Name (centered, bold)
+  // ── Name (centered, bold) ──
   var nameText = formatName(participant.name);
   var nw = fontBold.widthOfTextAtSize(nameText, settings.nameSize);
-  var nameX = settings.nameX - (nw / 2);
+  var nameDrawX = settings.nameX - (nw / 2);
   page.drawText(nameText, {
-    x: nameX, y: settings.nameY,
+    x: nameDrawX, y: settings.nameY,
     size: settings.nameSize, font: fontBold, color: color,
   });
 
-  // Course wipe + replace (on the MARKET ACCESS line)
+  // ── Course: wipe 2 lines ("successfully participated..." + "DIGITAL TRADE...") then draw course from Excel ──
   if (participant.courses) {
-    wipeAndDraw(page, participant.courses.toUpperCase(), {
-      wipeX: settings.courseX, wipeY: settings.courseY - 4,
-      wipeW: settings.courseW, wipeH: settings.courseH,
-      textX: settings.courseX, textY: settings.courseY,
-      size: settings.courseSize, font: fontBold, color: color,
-      align: settings.courseAlign,
-    });
+    wipeRect(page, settings.courseWipeX, settings.courseWipeY, settings.courseWipeW, settings.courseWipeH);
+    var courseText = participant.courses.toUpperCase();
+    drawCentered(page, courseText, settings.courseWipeX, settings.courseWipeW, settings.courseTextY, fontRegular, settings.courseSize, color);
   }
 
-  // Date wipe + replace
+  // ── Date: wipe original "Held on 9th December, 2025" then draw new date from Excel ──
   if (participant.dates) {
+    wipeRect(page, settings.dateWipeX, settings.dateWipeY, settings.dateWipeW, settings.dateWipeH);
     var formattedDate = formatDateForCert(participant.dates);
-    wipeAndDraw(page, formattedDate, {
-      wipeX: settings.dateX, wipeY: settings.dateY - 4,
-      wipeW: settings.dateW, wipeH: settings.dateH,
-      textX: settings.dateX, textY: settings.dateY,
-      size: settings.dateSize, font: fontRegular, color: color,
-      align: settings.dateAlign,
-    });
+    drawCentered(page, formattedDate, settings.dateWipeX, settings.dateWipeW, settings.dateTextY, fontRegular, settings.dateSize, color);
   }
 
   return await pdfDoc.save();
 }
 
+/* ── generate ZIP ── */
 async function generateZip() {
   if (!state.templateBytes) { setStatus("Load a template PDF first (Step 1)."); return; }
   if (!state.participants.length) { setStatus("Upload participants (Step 2)."); return; }
-
   var settings = getSettings();
   setStatus("Generating " + state.participants.length + " certificates...");
-
   var zip = new JSZip();
-
   for (var i = 0; i < state.participants.length; i++) {
     var p = state.participants[i];
     var serialNum = settings.startSerial + i;
@@ -460,7 +456,6 @@ async function generateZip() {
       zip.file("ERROR_" + serial + "_" + sanitizeNameForFile(p.name) + ".txt", String(e));
     }
   }
-
   setStatus("Packaging ZIP...");
   var zipBlob = await zip.generateAsync({ type: "blob" });
   var ts = new Date();

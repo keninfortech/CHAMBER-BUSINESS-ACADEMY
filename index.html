@@ -126,7 +126,7 @@
 
       <details>
         <summary>Positions (Serial, Name, Course, Date) + Wipe boxes</summary>
-        <p class="muted small">Wipe works by drawing a white rectangle over existing template text, then printing your value on top.</p>
+        <p class="muted small">Wipe draws a white rectangle over old template text, then prints new value on top. Adjust wipe Y &amp; height to fully cover original text.</p>
 
         <h4 class="subhead">Serial + Name</h4>
         <div class="row two">
@@ -142,17 +142,20 @@
           <div><label class="label" for="serialSize">Serial font size</label><input id="serialSize" type="number" value="14" /></div>
         </div>
 
-        <h4 class="subhead">Course (wipe + replace)</h4>
+        <h4 class="subhead">Course (wipe 2 lines + replace)</h4>
         <div class="row two">
-          <div><label class="label" for="courseX">Text X</label><input id="courseX" type="number" value="124" /></div>
-          <div><label class="label" for="courseY">Text Y</label><input id="courseY" type="number" value="310" /></div>
+          <div><label class="label" for="courseX">Wipe X</label><input id="courseX" type="number" value="100" /></div>
+          <div><label class="label" for="courseY">Text Y (baseline)</label><input id="courseY" type="number" value="310" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="courseW">Wipe width</label><input id="courseW" type="number" value="600" /></div>
-          <div><label class="label" for="courseH">Wipe height</label><input id="courseH" type="number" value="20" /></div>
+          <div><label class="label" for="courseWipeY">Wipe Y (bottom)</label><input id="courseWipeY" type="number" value="290" /></div>
+          <div><label class="label" for="courseWipeH">Wipe height</label><input id="courseWipeH" type="number" value="45" /></div>
         </div>
         <div class="row two">
+          <div><label class="label" for="courseW">Wipe width</label><input id="courseW" type="number" value="700" /></div>
           <div><label class="label" for="courseSize">Font size</label><input id="courseSize" type="number" value="16" /></div>
+        </div>
+        <div class="row two">
           <div>
             <label class="label" for="courseAlign">Alignment</label>
             <select id="courseAlign">
@@ -160,19 +163,23 @@
               <option value="left">Left</option>
             </select>
           </div>
+          <div></div>
         </div>
 
         <h4 class="subhead">Date (wipe + replace)</h4>
         <div class="row two">
-          <div><label class="label" for="dateX">Text X</label><input id="dateX" type="number" value="284" /></div>
-          <div><label class="label" for="dateY">Text Y</label><input id="dateY" type="number" value="264" /></div>
+          <div><label class="label" for="dateX">Wipe X</label><input id="dateX" type="number" value="250" /></div>
+          <div><label class="label" for="dateY">Text Y (baseline)</label><input id="dateY" type="number" value="264" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="dateW">Wipe width</label><input id="dateW" type="number" value="450" /></div>
-          <div><label class="label" for="dateH">Wipe height</label><input id="dateH" type="number" value="20" /></div>
+          <div><label class="label" for="dateWipeY">Wipe Y (bottom)</label><input id="dateWipeY" type="number" value="246" /></div>
+          <div><label class="label" for="dateWipeH">Wipe height</label><input id="dateWipeH" type="number" value="22" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="dateSize">Font size</label><input id="dateSize" type="number" value="14" /></div>
+          <div><label class="label" for="dateW">Wipe width</label><input id="dateW" type="number" value="350" /></div>
+          <div><label class="label" for="dateSize">Font size</label><input id="dateSize" type="number" value="16" /></div>
+        </div>
+        <div class="row two">
           <div>
             <label class="label" for="dateAlign">Alignment</label>
             <select id="dateAlign">
@@ -180,6 +187,7 @@
               <option value="left">Left</option>
             </select>
           </div>
+          <div></div>
         </div>
       </details>
 
