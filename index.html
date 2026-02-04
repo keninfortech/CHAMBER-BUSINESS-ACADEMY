@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KNCCI Certificate Generator</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Client-side libraries -->
   <script defer src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script defer src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
   <script defer src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -15,12 +13,12 @@
 <body>
   <header class="container">
     <h1>KNCCI Certificate Generator</h1>
-    <p class="muted">Bulk upload (CSV/XLSX) → generate certificates → download ZIP grouped by County. Works on GitHub Pages (no server).</p>
+    <p class="muted">Bulk upload (CSV/XLSX) &rarr; generate certificates &rarr; download ZIP grouped by County.</p>
   </header>
 
   <main class="container grid">
     <section class="card">
-      <h2>Step 1 — Template PDF</h2>
+      <h2>Step 1 &mdash; Template PDF</h2>
       <div class="row">
         <button id="btnLoadDefault" class="btn">Load default (assets/template.pdf)</button>
         <span class="muted small">or</span>
@@ -30,7 +28,7 @@
 
       <hr />
 
-      <h2>Step 2 — Upload Participants</h2>
+      <h2>Step 2 &mdash; Upload Participants</h2>
       <div class="row">
         <input id="participantsFile" class="file" type="file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
         <button id="btnDownloadCsvTemplate" class="btn">Download CSV template</button>
@@ -40,98 +38,55 @@
 
       <details>
         <summary>Column mapping (only if auto-mapping fails)</summary>
-        <p class="muted small">The app auto-detects columns if you use the template headers. If not, select the correct columns and click Apply.</p>
-
+        <p class="muted small">The app auto-detects columns. If not, select the correct columns and click Apply.</p>
         <div class="row two">
-          <div>
-            <label class="label" for="mapName">Participant Name *</label>
-            <select id="mapName"></select>
-          </div>
-          <div>
-            <label class="label" for="mapId">National ID *</label>
-            <select id="mapId"></select>
-          </div>
+          <div><label class="label" for="mapName">Participant Name *</label><select id="mapName"></select></div>
+          <div><label class="label" for="mapId">National ID *</label><select id="mapId"></select></div>
         </div>
         <div class="row two">
-          <div>
-            <label class="label" for="mapCounty">Business Location (County) *</label>
-            <select id="mapCounty"></select>
-          </div>
-          <div>
-            <label class="label" for="mapCourse">Course(s)</label>
-            <select id="mapCourse"></select>
-          </div>
+          <div><label class="label" for="mapCounty">Business Location (County) *</label><select id="mapCounty"></select></div>
+          <div><label class="label" for="mapCourse">Course(s)</label><select id="mapCourse"></select></div>
         </div>
         <div class="row two">
-          <div>
-            <label class="label" for="mapDate">Training Date(s)</label>
-            <select id="mapDate"></select>
-          </div>
-          <div>
-            <label class="label" for="mapIssueDate">Issue Date</label>
-            <select id="mapIssueDate"></select>
-          </div>
+          <div><label class="label" for="mapDate">Training Date(s)</label><select id="mapDate"></select></div>
+          <div><label class="label" for="mapIssueDate">Issue Date</label><select id="mapIssueDate"></select></div>
         </div>
-        <div class="row actions">
-          <button id="btnApplyMapping" class="btn primary">Apply Mapping</button>
-        </div>
+        <div class="row actions"><button id="btnApplyMapping" class="btn primary">Apply Mapping</button></div>
       </details>
     </section>
 
     <section class="card">
-      <h2>Step 3 — Output Settings</h2>
+      <h2>Step 3 &mdash; Output Settings</h2>
 
       <h3 class="subhead">Serial</h3>
       <div class="row two">
-        <div>
-          <label class="label" for="serialPrefix">Serial prefix</label>
-          <input id="serialPrefix" type="text" value="CBA" />
-        </div>
-        <div>
-          <label class="label" for="startSerial">Start serial number</label>
-          <input id="startSerial" type="number" value="811" min="0" />
-        </div>
+        <div><label class="label" for="serialPrefix">Serial prefix</label><input id="serialPrefix" type="text" value="CBA" /></div>
+        <div><label class="label" for="startSerial">Start serial number</label><input id="startSerial" type="number" value="811" min="0" /></div>
       </div>
       <div class="row two">
-        <div>
-          <label class="label" for="serialDigits">Serial digits (padding)</label>
-          <input id="serialDigits" type="number" value="4" min="1" max="10" />
-        </div>
-        <div>
-          <label class="label" for="zipNamePrefix">ZIP name prefix</label>
-          <input id="zipNamePrefix" type="text" value="KNCCI_Certificates" />
-        </div>
+        <div><label class="label" for="serialDigits">Serial digits (padding)</label><input id="serialDigits" type="number" value="4" min="1" max="10" /></div>
+        <div><label class="label" for="zipNamePrefix">ZIP name prefix</label><input id="zipNamePrefix" type="text" value="KNCCI_Certificates" /></div>
       </div>
 
-      <h3 class="subhead">Fonts (strict accuracy)</h3>
-      <p class="muted small">Upload the exact fonts used in your certificate design (TTF/OTF) for perfect matching. Otherwise it uses Helvetica.</p>
+      <h3 class="subhead">Fonts</h3>
+      <p class="muted small">Upload Trocchi TTF for exact match. Otherwise uses Times Roman.</p>
       <div class="row two">
-        <div>
-          <label class="label">Regular font</label>
-          <input id="fontRegularFile" class="file" type="file" accept=".ttf,.otf" />
-        </div>
-        <div>
-          <label class="label">Bold font</label>
-          <input id="fontBoldFile" class="file" type="file" accept=".ttf,.otf" />
-        </div>
+        <div><label class="label">Regular font</label><input id="fontRegularFile" class="file" type="file" accept=".ttf,.otf" /></div>
+        <div><label class="label">Bold font</label><input id="fontBoldFile" class="file" type="file" accept=".ttf,.otf" /></div>
       </div>
-      <div class="status" id="fontStatus">Using default fonts (Helvetica / Helvetica-Bold).</div>
-
-      <h3 class="subhead">Text Color</h3>
-      <div class="row three">
-        <div><label class="label" for="colorR">R</label><input id="colorR" type="number" value="0" min="0" max="255" /></div>
-        <div><label class="label" for="colorG">G</label><input id="colorG" type="number" value="0" min="0" max="255" /></div>
-        <div><label class="label" for="colorB">B</label><input id="colorB" type="number" value="0" min="0" max="255" /></div>
-      </div>
+      <div class="status" id="fontStatus">Using default fonts (Times Roman / Times Roman Bold).</div>
 
       <details>
-        <summary>Positions (Serial, Name, Course, Date) + Wipe boxes</summary>
-        <p class="muted small">Wipe draws a white rectangle over old template text, then prints new value on top. Adjust wipe Y &amp; height to fully cover original text.</p>
+        <summary>Positions &amp; Colors</summary>
 
         <h4 class="subhead">Serial + Name</h4>
         <div class="row two">
-          <div><label class="label" for="serialX">Serial X</label><input id="serialX" type="number" value="708" /></div>
+          <div><label class="label" for="serialX">Serial X</label><input id="serialX" type="number" value="678" /></div>
           <div><label class="label" for="serialY">Serial Y</label><input id="serialY" type="number" value="558" /></div>
+        </div>
+        <div class="row two">
+          <div><label class="label" for="serialSize">Serial font size</label><input id="serialSize" type="number" value="14" /></div>
+          <div></div>
         </div>
         <div class="row two">
           <div><label class="label" for="nameX">Name center X</label><input id="nameX" type="number" value="421" /></div>
@@ -139,55 +94,46 @@
         </div>
         <div class="row two">
           <div><label class="label" for="nameSize">Name font size</label><input id="nameSize" type="number" value="20" /></div>
-          <div><label class="label" for="serialSize">Serial font size</label><input id="serialSize" type="number" value="14" /></div>
+          <div></div>
         </div>
 
-        <h4 class="subhead">Course (wipe 2 lines + replace)</h4>
+        <h4 class="subhead">Course (wipe &amp; replace)</h4>
+        <p class="muted small">Wipes only the "DIGITAL TRADE..." line. "successfully participated" stays.</p>
         <div class="row two">
-          <div><label class="label" for="courseX">Wipe X</label><input id="courseX" type="number" value="100" /></div>
-          <div><label class="label" for="courseY">Text Y (baseline)</label><input id="courseY" type="number" value="310" /></div>
+          <div><label class="label" for="courseWipeX">Wipe X</label><input id="courseWipeX" type="number" value="120" /></div>
+          <div><label class="label" for="courseWipeY">Wipe Y</label><input id="courseWipeY" type="number" value="290" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="courseWipeY">Wipe Y (bottom)</label><input id="courseWipeY" type="number" value="290" /></div>
-          <div><label class="label" for="courseWipeH">Wipe height</label><input id="courseWipeH" type="number" value="45" /></div>
+          <div><label class="label" for="courseWipeW">Wipe W</label><input id="courseWipeW" type="number" value="640" /></div>
+          <div><label class="label" for="courseWipeH">Wipe H</label><input id="courseWipeH" type="number" value="22" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="courseW">Wipe width</label><input id="courseW" type="number" value="700" /></div>
+          <div><label class="label" for="courseTextY">Text Y</label><input id="courseTextY" type="number" value="295" /></div>
           <div><label class="label" for="courseSize">Font size</label><input id="courseSize" type="number" value="16" /></div>
         </div>
-        <div class="row two">
-          <div>
-            <label class="label" for="courseAlign">Alignment</label>
-            <select id="courseAlign">
-              <option value="center">Center</option>
-              <option value="left">Left</option>
-            </select>
-          </div>
-          <div></div>
+        <div class="row three">
+          <div><label class="label" for="courseColorR">R</label><input id="courseColorR" type="number" value="216" min="0" max="255" /></div>
+          <div><label class="label" for="courseColorG">G</label><input id="courseColorG" type="number" value="170" min="0" max="255" /></div>
+          <div><label class="label" for="courseColorB">B</label><input id="courseColorB" type="number" value="0" min="0" max="255" /></div>
         </div>
 
-        <h4 class="subhead">Date (wipe + replace)</h4>
+        <h4 class="subhead">Date (wipe &amp; replace)</h4>
         <div class="row two">
-          <div><label class="label" for="dateX">Wipe X</label><input id="dateX" type="number" value="250" /></div>
-          <div><label class="label" for="dateY">Text Y (baseline)</label><input id="dateY" type="number" value="264" /></div>
+          <div><label class="label" for="dateWipeX">Wipe X</label><input id="dateWipeX" type="number" value="250" /></div>
+          <div><label class="label" for="dateWipeY">Wipe Y</label><input id="dateWipeY" type="number" value="245" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="dateWipeY">Wipe Y (bottom)</label><input id="dateWipeY" type="number" value="246" /></div>
-          <div><label class="label" for="dateWipeH">Wipe height</label><input id="dateWipeH" type="number" value="22" /></div>
+          <div><label class="label" for="dateWipeW">Wipe W</label><input id="dateWipeW" type="number" value="300" /></div>
+          <div><label class="label" for="dateWipeH">Wipe H</label><input id="dateWipeH" type="number" value="25" /></div>
         </div>
         <div class="row two">
-          <div><label class="label" for="dateW">Wipe width</label><input id="dateW" type="number" value="350" /></div>
+          <div><label class="label" for="dateTextY">Text Y</label><input id="dateTextY" type="number" value="252" /></div>
           <div><label class="label" for="dateSize">Font size</label><input id="dateSize" type="number" value="16" /></div>
         </div>
-        <div class="row two">
-          <div>
-            <label class="label" for="dateAlign">Alignment</label>
-            <select id="dateAlign">
-              <option value="center">Center</option>
-              <option value="left">Left</option>
-            </select>
-          </div>
-          <div></div>
+        <div class="row three">
+          <div><label class="label" for="dateColorR">R</label><input id="dateColorR" type="number" value="6" min="0" max="255" /></div>
+          <div><label class="label" for="dateColorG">G</label><input id="dateColorG" type="number" value="8" min="0" max="255" /></div>
+          <div><label class="label" for="dateColorB">B</label><input id="dateColorB" type="number" value="8" min="0" max="255" /></div>
         </div>
       </details>
 
@@ -204,27 +150,15 @@
       <h2>Participants Preview</h2>
       <div class="tableWrap">
         <table id="tbl">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Serial</th>
-              <th>Name</th>
-              <th>National ID</th>
-              <th>County</th>
-              <th>Course(s)</th>
-              <th>Training Date(s)</th>
-              <th>Issue Date</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>#</th><th>Serial</th><th>Name</th><th>National ID</th><th>County</th><th>Course(s)</th><th>Training Date(s)</th><th>Issue Date</th>
+          </tr></thead>
           <tbody></tbody>
         </table>
       </div>
-      <p class="muted small"><strong>Note:</strong> GitHub Pages cannot save PDFs directly into your computer folders. This app downloads a ZIP; you choose where to save/extract it.</p>
     </section>
   </main>
 
-  <footer class="container muted small">
-    Version: Fixed bulk upload + auto-mapping • KNCCI certificate generator
-  </footer>
+  <footer class="container muted small">KNCCI Certificate Generator &bull; Netlify deploy ready</footer>
 </body>
 </html>

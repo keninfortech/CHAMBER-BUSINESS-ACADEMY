@@ -1,6 +1,6 @@
 /* global PDFLib, JSZip, XLSX */
 
-const state = {
+var state = {
   templateBytes: null,
   participantsRaw: [],
   headers: [],
@@ -10,16 +10,14 @@ const state = {
   fontBoldBytes: null,
 };
 
-const el = (id) => document.getElementById(id);
-const setStatus = (msg) => (el("genStatus").textContent = msg);
-const setTemplateStatus = (msg) => (el("templateStatus").textContent = msg);
-const setParticipantsStatus = (msg) => (el("participantsStatus").textContent = msg);
-const setMappingStatus = (msg) => (el("mappingStatus").textContent = msg);
-const setFontStatus = (msg) => (el("fontStatus").textContent = msg);
+var el = function(id) { return document.getElementById(id); };
+var setStatus = function(msg) { el("genStatus").textContent = msg; };
+var setTemplateStatus = function(msg) { el("templateStatus").textContent = msg; };
+var setParticipantsStatus = function(msg) { el("participantsStatus").textContent = msg; };
+var setMappingStatus = function(msg) { el("mappingStatus").textContent = msg; };
+var setFontStatus = function(msg) { el("fontStatus").textContent = msg; };
 
-function normalizeHeader(h) {
-  return (h || "").toString().trim().toLowerCase();
-}
+function normalizeHeader(h) { return (h || "").toString().trim().toLowerCase(); }
 
 function sanitizeCounty(county) {
   var v = (county || "").toString().trim();
@@ -29,8 +27,7 @@ function sanitizeCounty(county) {
 
 function sanitizeNameForFile(name) {
   var v = (name || "").toString().trim().toUpperCase();
-  var safe = v.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_").slice(0, 50);
-  return safe || "NAME_NOT_PROVIDED";
+  return v.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_").slice(0, 50) || "NAME_NOT_PROVIDED";
 }
 
 function formatName(name) {
@@ -48,13 +45,6 @@ function clampInt(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-function rgbFromInputs() {
-  var r = clampInt(parseInt(el("colorR").value, 10), 0, 255);
-  var g = clampInt(parseInt(el("colorG").value, 10), 0, 255);
-  var b = clampInt(parseInt(el("colorB").value, 10), 0, 255);
-  return { r: r / 255, g: g / 255, b: b / 255 };
-}
-
 function getSettings() {
   return {
     serialPrefix: el("serialPrefix").value.trim() || "CBA",
@@ -62,34 +52,39 @@ function getSettings() {
     serialDigits: parseInt(el("serialDigits").value, 10) || 4,
     zipNamePrefix: el("zipNamePrefix").value.trim() || "KNCCI_Certificates",
 
-    serialX: parseFloat(el("serialX").value) || 708,
+    // Serial position (right after "No:")
+    serialX: parseFloat(el("serialX").value) || 678,
     serialY: parseFloat(el("serialY").value) || 558,
+    serialSize: parseFloat(el("serialSize").value) || 14,
+
+    // Name position (centered)
     nameX: parseFloat(el("nameX").value) || 421,
     nameY: parseFloat(el("nameY").value) || 340,
     nameSize: parseFloat(el("nameSize").value) || 20,
-    serialSize: parseFloat(el("serialSize").value) || 14,
 
-    // Course wipe: covers "successfully participated..." + "DIGITAL TRADE..." (2 lines)
-    courseWipeX: parseFloat(el("courseX").value) || 100,
+    // Course: wipe only "DIGITAL TRADE..." line, keep "successfully participated"
+    courseWipeX: parseFloat(el("courseWipeX").value) || 120,
     courseWipeY: parseFloat(el("courseWipeY").value) || 290,
-    courseWipeW: parseFloat(el("courseW").value) || 700,
-    courseWipeH: parseFloat(el("courseWipeH").value) || 45,
-    // Course text: centered on the original course line
-    courseTextY: parseFloat(el("courseY").value) || 310,
+    courseWipeW: parseFloat(el("courseWipeW").value) || 640,
+    courseWipeH: parseFloat(el("courseWipeH").value) || 22,
+    courseTextY: parseFloat(el("courseTextY").value) || 295,
     courseSize: parseFloat(el("courseSize").value) || 16,
-    courseAlign: el("courseAlign").value || "center",
 
-    // Date wipe: covers "Held on 9th December , 2025"
-    dateWipeX: parseFloat(el("dateX").value) || 250,
-    dateWipeY: parseFloat(el("dateWipeY").value) || 246,
-    dateWipeW: parseFloat(el("dateW").value) || 350,
-    dateWipeH: parseFloat(el("dateWipeH").value) || 22,
-    // Date text
-    dateTextY: parseFloat(el("dateY").value) || 264,
+    // Date: wipe "Held on 9th December , 2025"
+    dateWipeX: parseFloat(el("dateWipeX").value) || 250,
+    dateWipeY: parseFloat(el("dateWipeY").value) || 245,
+    dateWipeW: parseFloat(el("dateWipeW").value) || 300,
+    dateWipeH: parseFloat(el("dateWipeH").value) || 25,
+    dateTextY: parseFloat(el("dateTextY").value) || 252,
     dateSize: parseFloat(el("dateSize").value) || 16,
-    dateAlign: el("dateAlign").value || "center",
 
-    textColor: rgbFromInputs(),
+    // Colors (R,G,B 0-255)
+    courseColorR: parseFloat(el("courseColorR").value),
+    courseColorG: parseFloat(el("courseColorG").value),
+    courseColorB: parseFloat(el("courseColorB").value),
+    dateColorR: parseFloat(el("dateColorR").value),
+    dateColorG: parseFloat(el("dateColorG").value),
+    dateColorB: parseFloat(el("dateColorB").value),
   };
 }
 
@@ -121,9 +116,9 @@ async function handleFontUpload(which, file) {
 }
 
 function setMappingOptions(headers) {
-  var selects = ["mapName", "mapId", "mapCounty", "mapCourse", "mapDate", "mapIssueDate"].map(el);
-  for (var i = 0; i < selects.length; i++) {
-    var s = selects[i];
+  var ids = ["mapName", "mapId", "mapCounty", "mapCourse", "mapDate", "mapIssueDate"];
+  for (var i = 0; i < ids.length; i++) {
+    var s = el(ids[i]);
     s.innerHTML = "";
     var optNone = document.createElement("option");
     optNone.value = "";
@@ -159,19 +154,14 @@ function autoSelect(selectId, headers, candidates) {
 }
 
 function splitCsvLine(line) {
-  var res = [];
-  var cur = "";
-  var inQ = false;
+  var res = [], cur = "", inQ = false;
   for (var i = 0; i < line.length; i++) {
     var ch = line[i];
     if (ch === '"') {
       if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
       else inQ = !inQ;
-    } else if (ch === "," && !inQ) {
-      res.push(cur); cur = "";
-    } else {
-      cur += ch;
-    }
+    } else if (ch === "," && !inQ) { res.push(cur); cur = ""; }
+    else { cur += ch; }
   }
   res.push(cur);
   return res.map(function(x) { return x.trim(); });
@@ -198,39 +188,26 @@ async function handleParticipantsUpload(file) {
   var rows = [];
   try {
     if (lower.endsWith(".csv")) {
-      var text = new TextDecoder("utf-8").decode(buf);
-      rows = parseCsv(text);
+      rows = parseCsv(new TextDecoder("utf-8").decode(buf));
     } else {
       var wb = XLSX.read(buf, { type: "array" });
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
     }
-  } catch (e) {
-    setParticipantsStatus("Failed to read file: " + e.message);
-    return;
-  }
+  } catch (e) { setParticipantsStatus("Failed to read file: " + e.message); return; }
   state.participantsRaw = rows;
   state.headers = rows.length ? Object.keys(rows[0]) : [];
   setParticipantsStatus("Loaded " + rows.length + " row(s) from: " + file.name);
   setMappingOptions(state.headers);
-  var ok = applyMapping(true);
-  if (!ok) {
+  if (!applyMapping(true)) {
     setMappingStatus('Auto-mapping failed. Open "Column mapping" and apply manually.');
   }
 }
 
 function applyMapping(isAuto) {
-  if (!state.participantsRaw.length) {
-    setStatus("Upload a participant file first.");
-    return false;
-  }
+  if (!state.participantsRaw.length) { setStatus("Upload a participant file first."); return false; }
   var map = {
-    name: el("mapName").value,
-    id: el("mapId").value,
-    county: el("mapCounty").value,
-    course: el("mapCourse").value,
-    date: el("mapDate").value,
-    issueDate: el("mapIssueDate").value,
+    name: el("mapName").value, id: el("mapId").value, county: el("mapCounty").value,
+    course: el("mapCourse").value, date: el("mapDate").value, issueDate: el("mapIssueDate").value,
   };
   if (!map.name || !map.id || !map.county) {
     if (!isAuto) setStatus("Mapping required: Participant Name, National ID, Business Location.");
@@ -238,8 +215,7 @@ function applyMapping(isAuto) {
   }
   state.participants = [];
   state.usedIds = new Set();
-  var dupes = 0;
-  var skipped = 0;
+  var dupes = 0, skipped = 0;
   for (var i = 0; i < state.participantsRaw.length; i++) {
     var r = state.participantsRaw[i];
     var name = (r[map.name] || "").toString().trim();
@@ -253,8 +229,7 @@ function applyMapping(isAuto) {
     state.usedIds.add(natId);
     state.participants.push({ name: name, natId: natId, county: county, courses: courses, dates: dates, issueDate: issueDate });
   }
-  persist();
-  renderTable();
+  persist(); renderTable();
   setMappingStatus("Mapping applied. Participants ready: " + state.participants.length + " (skipped " + skipped + ", duplicates removed " + dupes + ").");
   setStatus("Ready to generate ZIP.");
   return true;
@@ -265,18 +240,13 @@ function renderTable() {
   tbody.innerHTML = "";
   var settings = getSettings();
   state.participants.forEach(function(p, idx) {
-    var serialNum = settings.startSerial + idx;
-    var serial = settings.serialPrefix + padSerial(serialNum, settings.serialDigits);
+    var serial = settings.serialPrefix + padSerial(settings.startSerial + idx, settings.serialDigits);
     var tr = document.createElement("tr");
     tr.innerHTML =
-      "<td>" + (idx + 1) + "</td>" +
-      "<td>" + escapeHtml(serial) + "</td>" +
-      "<td>" + escapeHtml(formatName(p.name)) + "</td>" +
-      "<td>" + escapeHtml(p.natId) + "</td>" +
-      "<td>" + escapeHtml(sanitizeCounty(p.county)) + "</td>" +
-      "<td>" + escapeHtml(p.courses || "") + "</td>" +
-      "<td>" + escapeHtml(p.dates || "") + "</td>" +
-      "<td>" + escapeHtml(p.issueDate || "") + "</td>";
+      "<td>" + (idx + 1) + "</td><td>" + escapeHtml(serial) + "</td><td>" + escapeHtml(formatName(p.name)) +
+      "</td><td>" + escapeHtml(p.natId) + "</td><td>" + escapeHtml(sanitizeCounty(p.county)) +
+      "</td><td>" + escapeHtml(p.courses || "") + "</td><td>" + escapeHtml(p.dates || "") +
+      "</td><td>" + escapeHtml(p.issueDate || "") + "</td>";
     tbody.appendChild(tr);
   });
 }
@@ -303,11 +273,8 @@ function restore() {
 function downloadBlob(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
 }
 
@@ -315,11 +282,8 @@ async function downloadCsvTemplate() {
   try {
     var res = await fetch("assets/participants_template.csv");
     if (!res.ok) throw new Error("HTTP " + res.status);
-    var blob = await res.blob();
-    downloadBlob(blob, "KNCCI_participants_template.csv");
-  } catch (e) {
-    setStatus("Failed to download template: " + e.message);
-  }
+    downloadBlob(await res.blob(), "KNCCI_participants_template.csv");
+  } catch (e) { setStatus("Failed to download template: " + e.message); }
 }
 
 function exportCsvProcessed() {
@@ -327,8 +291,7 @@ function exportCsvProcessed() {
   var settings = getSettings();
   var headers = ["Serial", "Participant Name", "National ID", "Business Location", "Course(s)", "Training Date(s)", "Issue Date"];
   var rows = state.participants.map(function(p, idx) {
-    var serialNum = settings.startSerial + idx;
-    var serial = settings.serialPrefix + padSerial(serialNum, settings.serialDigits);
+    var serial = settings.serialPrefix + padSerial(settings.startSerial + idx, settings.serialDigits);
     return [serial, formatName(p.name), p.natId, sanitizeCounty(p.county), p.courses || "", p.dates || "", p.issueDate || ""];
   });
   var csv = [headers].concat(rows).map(function(r) {
@@ -338,52 +301,31 @@ function exportCsvProcessed() {
   setStatus("Exported processed CSV.");
 }
 
-/* ── date formatter: "Held on 30th January, 2026" ── */
+/* ── Format date: "Held on 30th January , 2026" ── */
 function formatDateForCert(dateStr) {
   if (!dateStr) return "";
   var str = dateStr.toString().trim();
-  var d;
-  try {
-    d = new Date(str);
-    if (isNaN(d.getTime())) {
-      var parts = str.split(/[\/\-]/);
-      if (parts.length === 3) {
-        if (parseInt(parts[0]) > 12) d = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
-        else d = new Date(parts[2] + "-" + parts[0] + "-" + parts[1]);
-      }
-    }
-    if (isNaN(d.getTime())) return "Held on " + dateStr;
-  } catch (e) {
-    return "Held on " + dateStr;
+  var d = null;
+  // Try multiple date formats
+  var fmts = [
+    function(s) { return new Date(s); },
+    function(s) { var p = s.split(/[\/\-]/); return p.length === 3 && parseInt(p[0]) > 12 ? new Date(p[2] + "-" + p[1] + "-" + p[0]) : new Date(p[2] + "-" + p[0] + "-" + p[1]); },
+  ];
+  for (var i = 0; i < fmts.length; i++) {
+    try { d = fmts[i](str); if (!isNaN(d.getTime())) break; else d = null; } catch(e) { d = null; }
   }
+  if (!d) return "Held on " + dateStr;
   var day = d.getDate();
   var suffix = "th";
   if (day < 11 || day > 13) {
     var mod = day % 10;
-    if (mod === 1) suffix = "st";
-    else if (mod === 2) suffix = "nd";
-    else if (mod === 3) suffix = "rd";
+    if (mod === 1) suffix = "st"; else if (mod === 2) suffix = "nd"; else if (mod === 3) suffix = "rd";
   }
   var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  return "Held on " + day + suffix + " " + months[d.getMonth()] + ", " + d.getFullYear();
+  return "Held on " + day + suffix + " " + months[d.getMonth()] + " , " + d.getFullYear();
 }
 
-/* ── wipe rect + draw text ── */
-function wipeRect(page, x, y, w, h) {
-  var rgb = PDFLib.rgb;
-  page.drawRectangle({
-    x: x, y: y, width: w, height: h,
-    color: rgb(1, 1, 1), borderColor: rgb(1, 1, 1), borderWidth: 0,
-  });
-}
-
-function drawCentered(page, text, areaX, areaW, y, font, size, color) {
-  var tw = font.widthOfTextAtSize(text, size);
-  var x = areaX + (areaW / 2) - (tw / 2);
-  page.drawText(text, { x: x, y: y, size: size, font: font, color: color });
-}
-
-/* ── build one certificate ── */
+/* ── Build one certificate PDF ── */
 async function buildCertificatePdfBytes(templateBytes, participant, serialText, settings) {
   var PDFDocument = PDFLib.PDFDocument;
   var StandardFonts = PDFLib.StandardFonts;
@@ -391,49 +333,75 @@ async function buildCertificatePdfBytes(templateBytes, participant, serialText, 
 
   var pdfDoc = await PDFDocument.load(templateBytes);
   var page = pdfDoc.getPage(0);
+  var pageWidth = page.getWidth();
 
-  // Fonts: use custom if uploaded, else Helvetica fallback
+  // Fonts
   var fontRegular, fontBold;
   if (state.fontRegularBytes) fontRegular = await pdfDoc.embedFont(state.fontRegularBytes);
   else fontRegular = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   if (state.fontBoldBytes) fontBold = await pdfDoc.embedFont(state.fontBoldBytes);
   else fontBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
 
-  var color = rgb(settings.textColor.r, settings.textColor.g, settings.textColor.b);
+  // Colors
+  var colorBlack = rgb(0, 0, 0);
+  var colorCourse = rgb(settings.courseColorR / 255, settings.courseColorG / 255, settings.courseColorB / 255);
+  var colorDate = rgb(settings.dateColorR / 255, settings.dateColorG / 255, settings.dateColorB / 255);
+  var colorWhite = rgb(1, 1, 1);
 
-  // ── Serial number ──
+  // ── Serial (black) ──
   page.drawText(serialText, {
     x: settings.serialX, y: settings.serialY,
-    size: settings.serialSize, font: fontRegular, color: color,
+    size: settings.serialSize, font: fontRegular, color: colorBlack,
   });
 
-  // ── Name (centered, bold) ──
+  // ── Name (black, centered, bold) ──
   var nameText = formatName(participant.name);
   var nw = fontBold.widthOfTextAtSize(nameText, settings.nameSize);
-  var nameDrawX = settings.nameX - (nw / 2);
   page.drawText(nameText, {
-    x: nameDrawX, y: settings.nameY,
-    size: settings.nameSize, font: fontBold, color: color,
+    x: settings.nameX - nw / 2, y: settings.nameY,
+    size: settings.nameSize, font: fontBold, color: colorBlack,
   });
 
-  // ── Course: wipe 2 lines ("successfully participated..." + "DIGITAL TRADE...") then draw course from Excel ──
+  // ── Course: wipe ONLY "DIGITAL TRADE..." line, keep "successfully participated" ──
   if (participant.courses) {
-    wipeRect(page, settings.courseWipeX, settings.courseWipeY, settings.courseWipeW, settings.courseWipeH);
+    // White rectangle over course line
+    page.drawRectangle({
+      x: settings.courseWipeX, y: settings.courseWipeY,
+      width: settings.courseWipeW, height: settings.courseWipeH,
+      color: colorWhite, borderWidth: 0,
+    });
+    // Draw course text centered (golden color)
     var courseText = participant.courses.toUpperCase();
-    drawCentered(page, courseText, settings.courseWipeX, settings.courseWipeW, settings.courseTextY, fontRegular, settings.courseSize, color);
+    var cw = fontRegular.widthOfTextAtSize(courseText, settings.courseSize);
+    var cx = (pageWidth / 2) - (cw / 2);
+    page.drawText(courseText, {
+      x: cx, y: settings.courseTextY,
+      size: settings.courseSize, font: fontRegular, color: colorCourse,
+    });
   }
 
-  // ── Date: wipe original "Held on 9th December, 2025" then draw new date from Excel ──
+  // ── Date: wipe "Held on 9th December , 2025", replace with Excel date ──
   if (participant.dates) {
-    wipeRect(page, settings.dateWipeX, settings.dateWipeY, settings.dateWipeW, settings.dateWipeH);
+    // White rectangle over date line
+    page.drawRectangle({
+      x: settings.dateWipeX, y: settings.dateWipeY,
+      width: settings.dateWipeW, height: settings.dateWipeH,
+      color: colorWhite, borderWidth: 0,
+    });
+    // Draw formatted date centered (near-black, matching template)
     var formattedDate = formatDateForCert(participant.dates);
-    drawCentered(page, formattedDate, settings.dateWipeX, settings.dateWipeW, settings.dateTextY, fontRegular, settings.dateSize, color);
+    var dw = fontRegular.widthOfTextAtSize(formattedDate, settings.dateSize);
+    var dx = (pageWidth / 2) - (dw / 2);
+    page.drawText(formattedDate, {
+      x: dx, y: settings.dateTextY,
+      size: settings.dateSize, font: fontRegular, color: colorDate,
+    });
   }
 
   return await pdfDoc.save();
 }
 
-/* ── generate ZIP ── */
+/* ── Generate ZIP ── */
 async function generateZip() {
   if (!state.templateBytes) { setStatus("Load a template PDF first (Step 1)."); return; }
   if (!state.participants.length) { setStatus("Upload participants (Step 2)."); return; }
@@ -442,36 +410,29 @@ async function generateZip() {
   var zip = new JSZip();
   for (var i = 0; i < state.participants.length; i++) {
     var p = state.participants[i];
-    var serialNum = settings.startSerial + i;
-    var serial = settings.serialPrefix + padSerial(serialNum, settings.serialDigits);
-    var countyFolder = sanitizeCounty(p.county);
-    var safeName = sanitizeNameForFile(p.name);
-    var filename = serial + "_" + safeName + ".pdf";
+    var serial = settings.serialPrefix + padSerial(settings.startSerial + i, settings.serialDigits);
+    var folder = sanitizeCounty(p.county);
+    var filename = serial + "_" + sanitizeNameForFile(p.name) + ".pdf";
     try {
       var pdfBytes = await buildCertificatePdfBytes(state.templateBytes, p, serial, settings);
-      zip.folder(countyFolder).file(filename, pdfBytes);
+      zip.folder(folder).file(filename, pdfBytes);
       if ((i + 1) % 50 === 0) setStatus("Progress: " + (i + 1) + "/" + state.participants.length);
     } catch (e) {
       console.error(e);
-      zip.file("ERROR_" + serial + "_" + sanitizeNameForFile(p.name) + ".txt", String(e));
+      zip.file("ERROR_" + serial + ".txt", String(e));
     }
   }
   setStatus("Packaging ZIP...");
   var zipBlob = await zip.generateAsync({ type: "blob" });
   var ts = new Date();
   var stamp = ts.getFullYear() + String(ts.getMonth() + 1).padStart(2, "0") + String(ts.getDate()).padStart(2, "0") + "_" + String(ts.getHours()).padStart(2, "0") + String(ts.getMinutes()).padStart(2, "0");
-  var outName = settings.zipNamePrefix + "_" + stamp + ".zip";
-  downloadBlob(zipBlob, outName);
-  setStatus("Done. Downloaded: " + outName);
+  downloadBlob(zipBlob, settings.zipNamePrefix + "_" + stamp + ".zip");
+  setStatus("Done! ZIP downloaded.");
 }
 
 function resetLoadedList() {
-  state.participantsRaw = [];
-  state.headers = [];
-  state.participants = [];
-  state.usedIds = new Set();
-  persist();
-  renderTable();
+  state.participantsRaw = []; state.headers = []; state.participants = []; state.usedIds = new Set();
+  persist(); renderTable();
   setParticipantsStatus("No participant file loaded.");
   setMappingStatus("Mapping: not applied yet.");
   setStatus("Reset complete.");
@@ -491,8 +452,4 @@ function wireEvents() {
   ["serialPrefix", "startSerial", "serialDigits"].forEach(function(id) { el(id).addEventListener("input", renderTable); });
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-  restore();
-  wireEvents();
-  renderTable();
-});
+document.addEventListener("DOMContentLoaded", function() { restore(); wireEvents(); renderTable(); });
